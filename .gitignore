@@ -1,0 +1,12 @@
+SolarEdge.txt
+src/__pycache__/
+.spyproject/
+**/config.ini
+
+News/data/**/*
+!/News/data/
+!/News/data/**/
+
+**/deleted
+**/delete
+
