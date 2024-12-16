@@ -312,12 +312,12 @@ def summary_chatgpt(text_to_summarize):
                    "content": "This is a news article. Your audience is university professor with no background in this topic."}
     user_content = f"Summarize this article in 300 to 500 words using bullet points. Add subheadings for each major topic discussed. Include the article headline at the top. Use ** as a marker for subheadings. \n: {text_to_summarize}"
     user_content = f"Summarize this article in a minimum of 400 words using bullet points. Add subheadings for each major topic discussed. Include the article headline at the top. Format as an HTML page. \n: {text_to_summarize}"
-    user_content = f"Summarise this article. Prefer an annotation-style response, with breakdowns of sections, insights and highlights of key points for context and understanding. Additionally, include all relevant names and quotes by key people. Format as an HTML page. \n: {text_to_summarize}"
+    user_content = f"Summarise this article. Prefer an annotation-style response, with breakdowns of sections, insights and highlights of key points for context and understanding. Additionally, include all relevant names and quotes by key people. Format as an HTML page.  \n: {text_to_summarize}"
 
     user_role = {"role": "user", "content": user_content}
     message_input = [system_role, user_role]
     seed = random.randint(0, 1000)
-    chat_completion = chat_bot.create(model=model_choice, messages=message_input, stream=False)
+    chat_completion = chat_bot.create(model=model_choice, messages=message_input, stream=False, seed=seed, temperature=0)
 
     output_text = chat_completion.choices[0].message.content
     word_count = len(output_text.split())
@@ -435,4 +435,4 @@ def add_link_tags(text):
 
 
 FOLDER_LOCATIONS = folder_locations()
-print(f"Current folder is {FOLDER_LOCATIONS}")
+# print(f"Current folder is {FOLDER_LOCATIONS}")
