@@ -64,6 +64,7 @@ def folder_locations():
     FOLDER_LOCATIONS['OUTPUT_DIRECTORY'] = f"{FOLDER_LOCATIONS['PROJECT_DIRECTORY']}/data/output"
     FOLDER_LOCATIONS['ARTICLE_DIRECTORY'] = f"{FOLDER_LOCATIONS['PROJECT_DIRECTORY']}/data/input/articles"
     FOLDER_LOCATIONS['OPENAI_KEY'] = config.get('passwords', 'openai_apikey')
+    FOLDER_LOCATIONS['OUTPUT_SUMMARISED'] = f"{FOLDER_LOCATIONS['OUTPUT_DIRECTORY']}/summarised"
 
     return FOLDER_LOCATIONS
 
@@ -275,7 +276,7 @@ def summarize_folder(folder_source=None):
             deleted_folder_filepath = f"{folder_source}/delete/{file_name}"
             if os.path.exists(deleted_folder_filepath):
                 os.remove(deleted_folder_filepath)
-            print(file_name)
+            # print(file_name)
             shutil.move(file_path, f"{folder_source}/delete/{file_name}")
 
     combine_summary_folder(output_folder)
@@ -283,6 +284,27 @@ def summarize_folder(folder_source=None):
 
 
 def summary_chatgpt(text_to_summarize):
+    """
+    Use ChatGPT to summarize a given text
+
+    1. Initializes an OpenAI client with an API key.
+    2. Defines a system role and a user role with a prompt to summarize the text.
+    3. Sends the prompt to the OpenAI chat completion model and receives a response.
+    4. Extracts the summary from the response and appends metadata (word count, seed, model, tokens, and fingerprint).
+    5. Returns the summary with metadata.
+
+
+    Parameters
+    ----------
+    text_to_summarize : str
+        The text to be summarized
+
+    Returns
+    -------
+    str
+        The summarized text in HTML format
+
+    """
 
     from openai import OpenAI
 
@@ -298,12 +320,10 @@ def summary_chatgpt(text_to_summarize):
     user_content = f"Summarize this article in a minimum of 400 words using bullet points. Add subheadings for each major topic discussed. Include the article headline at the top. Format as an HTML page. \n: {text_to_summarize}"
     user_content = f"Summarise this article. Prefer an annotation-style response, with breakdowns of sections, insights and highlights of key points for context and understanding. Additionally, include all relevant names and quotes by key people. Format as an HTML page. \n: {text_to_summarize}"
 
-
     user_role = {"role": "user", "content": user_content}
     message_input = [system_role, user_role]
     seed = random.randint(0, 1000)
     chat_completion = chat_bot.create(model=model_choice, messages=message_input, stream=False)
-    # chat_completion.choices[0].message.content
 
     output_text = chat_completion.choices[0].message.content
     word_count = len(output_text.split())
@@ -311,19 +331,18 @@ def summary_chatgpt(text_to_summarize):
     output_text = f"{output_text}\n <p>Seed: {seed}"
     output_text = f"{output_text}\n <p>Model: {chat_completion.model}"
     output_text = f"{output_text}\n <p>Tokens: {chat_completion.usage}"
-
-
-
     output_text = f"{output_text}\n <p>Fingerprint: {chat_completion.system_fingerprint}"
-    print("sssss",output_text)
 
     print(f"Word count: {word_count}")
     return output_text
 
 
+@decorators.timing_decorator
 def cleanup(days_to_cleanup=7):
     """
     Delete all files in the 'deleted' subfolders
+
+    Deletes all files in the 'output/summarised' subfolder older than a specified number of days.
 
     Returns
     -------
@@ -348,6 +367,19 @@ def cleanup(days_to_cleanup=7):
                 # Check if the file is older than one week (7 days)
                 if age_in_days > days_to_cleanup:
                     # Delete the file
+                    os.remove(file_path)
+    
+    # This code snippet deletes files in the OUTPUT_SUMMARISED directory that are older 
+    # than a specified number of days (days_to_cleanup). It does this by:
+    # Walking through the directory tree rooted at OUTPUT_SUMMARISED.
+    # For each file, calculating its age in days since last modification.
+    # If the file is older than days_to_cleanup, deleting it.
+    for root, dirs, files in os.walk(FOLDER_LOCATIONS['OUTPUT_SUMMARISED']):
+        for file in files:
+                file_path = os.path.join(root, file)
+                modification_time = os.path.getmtime(file_path)
+                age_in_days = (time.time() - modification_time) / (24 * 60 * 60)
+                if age_in_days > days_to_cleanup:
                     os.remove(file_path)
 
 
