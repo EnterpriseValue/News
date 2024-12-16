@@ -107,13 +107,9 @@ def parse_html(file_path):
                 # paragraphs = f"{paragraphs}Title: {p_tags[i]}{text_list[i]}\n\n"
 
                 paragraphs = f"{paragraphs}Title: {text_list[i]}\n\n"
-                print(text_list[i])
+                # print(text_list[i])
 
             elif p_tags[i].attrs:  # only use if there are attributes, otherwise it's junk
-                # print(f"{text}\n")
-
-                # paragraphs = ''.join([f'{text}\n\n' for text in text_list])
-
                 if 'id' in p_tags[i].attrs:
                     if p_tags[i].attrs['id'] == 'article-summary':
                         pass
@@ -251,7 +247,6 @@ def summarize_folder(folder_source=None):
     import shutil
 
     if folder_source is None:
-        # print(os.getcwd())
         folder_source = f"{FOLDER_LOCATIONS['ARTICLE_DIRECTORY']}/extracted"
         output_folder = f"{FOLDER_LOCATIONS['OUTPUT_DIRECTORY']}/summarised"
 
@@ -266,7 +261,6 @@ def summarize_folder(folder_source=None):
             url = x.split('\n')[-1].split()[-1]
             output_file_path = os.path.join(output_folder, f"{filename_new}-summarized.html")
             summarised_text = summary_chatgpt(x)
-            # print(file, x, summarised_text)
             with open(output_file_path, "w", encoding="utf-8") as file:
                 file.write(summarised_text)
                 file.write(f"\n\nURL: {url}")
@@ -332,6 +326,13 @@ def summary_chatgpt(text_to_summarize):
     output_text = f"{output_text}\n <p>Model: {chat_completion.model}"
     output_text = f"{output_text}\n <p>Tokens: {chat_completion.usage}"
     output_text = f"{output_text}\n <p>Fingerprint: {chat_completion.system_fingerprint}"
+
+    # OpenAI charges for the number of tokens used. We can calculate the cost based on the number of tokens used.
+    # Inputs: $0.15 per 1M tokens
+    # Outputs: $0.60 per 1M tokens
+    cost = (chat_completion.usage.prompt_tokens * (0.15/(10**6)) + chat_completion.usage.completion_tokens * (0.60/(10**6)))*100
+    # print(f"Cost: {cost:.4f} cents")
+    output_text = f"{output_text}\n <p>Cost: {cost:.4f} cents"
 
     print(f"Word count: {word_count}")
     return output_text
